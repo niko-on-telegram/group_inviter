@@ -1,0 +1,11 @@
+telegram:
+  bot_token: "123456789:INVALIDTOKEN"
+  parse_mode: "HTML"
+  admin_chat_id: 123456789
+logging:
+  level: "INFO"
+  json: false
+  directory: "logs"
+  info_filename: "info.log"
+  debug_filename: "debug.log"
+  timezone: "UTC"

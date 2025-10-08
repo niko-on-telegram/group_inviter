@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "group-inviter"
+version = "0.1.0"
+description = "Telegram bot skeleton powered by aiogram"
+readme = "README.md"
+requires-python = ">=3.13"
+license = {text = "MIT"}
+authors = [
+  {name = "Your Name"}
+]
+dependencies = [
+  "aiogram>=3.4,<4.0",
+  "pydantic>=2.7,<3.0",
+  "pyyaml>=6.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.5.0,<0.6",
+  "mypy>=1.9,<2.0",
+  "pytest>=8.2,<9.0",
+  "coverage[toml]>=7.5,<8.0",
+  "types-PyYAML>=6.0.12.20240917,<6.1"
+]
+
+[project.urls]
+Homepage = "https://github.com/your-user/group-inviter"
+Repository = "https://github.com/your-user/group-inviter"
+
+[project.scripts]
+start-bot = "group_inviter.__main__:entrypoint"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "ASYNC", "S"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["group_inviter"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+minversion = "8.1"
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["group_inviter"]
+
+[tool.coverage.report]
+show_missing = true
