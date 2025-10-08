@@ -15,6 +15,7 @@ from .configuration import LoggingConfig
 LOGGER = logging.getLogger(__name__)
 
 TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
+FILENAME_TIMESTAMP_FORMAT = "%Y%m%dT%H%M%S%z"
 
 
 class TimezoneAwareFormatter(logging.Formatter):
@@ -76,12 +77,28 @@ def _make_rotating_handler(path: Path, level: int, tzinfo: tzinfo) -> logging.Ha
     return handler
 
 
+def _timestamped_log_path(log_dir: Path, filename: str, run_dt: datetime) -> Path:
+    """Attach a run-specific timestamp to the configured filename."""
+
+    timestamp = run_dt.strftime(FILENAME_TIMESTAMP_FORMAT)
+    relative = Path(filename)
+    stem = relative.stem if relative.suffix else relative.name
+    suffix = relative.suffix
+    new_name = f"{stem}-{timestamp}{suffix}" if suffix else f"{stem}-{timestamp}"
+    if relative.parent and relative.parent != Path("."):
+        relative = relative.parent / new_name
+    else:
+        relative = Path(new_name)
+    return log_dir / relative
+
+
 def configure_logging(config: LoggingConfig) -> None:
     """Configure standard library logging based on settings."""
 
     tzinfo = _resolve_timezone(config.timezone)
     level = getattr(logging, config.level.upper(), logging.INFO)
     handlers: list[logging.Handler] = []
+    run_started_at = datetime.now(tzinfo)
 
     stream_handler = logging.StreamHandler()
     if config.structured:
@@ -98,8 +115,12 @@ def configure_logging(config: LoggingConfig) -> None:
 
     log_dir = config.directory
     log_dir.mkdir(parents=True, exist_ok=True)
-    info_handler = _make_rotating_handler(log_dir / config.info_filename, logging.INFO, tzinfo)
-    debug_handler = _make_rotating_handler(log_dir / config.debug_filename, logging.DEBUG, tzinfo)
+    info_path = _timestamped_log_path(log_dir, config.info_filename, run_started_at)
+    debug_path = _timestamped_log_path(log_dir, config.debug_filename, run_started_at)
+    info_path.parent.mkdir(parents=True, exist_ok=True)
+    debug_path.parent.mkdir(parents=True, exist_ok=True)
+    info_handler = _make_rotating_handler(info_path, logging.INFO, tzinfo)
+    debug_handler = _make_rotating_handler(debug_path, logging.DEBUG, tzinfo)
     handlers.extend([info_handler, debug_handler])
 
     logging.basicConfig(

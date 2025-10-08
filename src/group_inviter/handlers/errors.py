@@ -10,30 +10,11 @@ from aiogram import Router
 from aiogram.types import ErrorEvent
 
 from ..configuration import AppConfig
+from ._helpers import extract_config, notify_admin
 
 LOGGER = logging.getLogger(__name__)
 
 router = Router()
-
-
-def _extract_config(event: ErrorEvent) -> AppConfig | None:
-    workflow_data: dict[str, Any] = getattr(event.dispatcher, "workflow_data", {})
-    config = workflow_data.get("config")
-    return config if isinstance(config, AppConfig) else None
-
-
-async def _notify_admin(event: ErrorEvent, config: AppConfig, message: str) -> None:
-    admin_chat_id = config.telegram.admin_chat_id
-    if not admin_chat_id:
-        return
-    try:
-        await event.bot.send_message(chat_id=admin_chat_id, text=message)
-    except Exception as notify_exc:  # pragma: no cover - best-effort notification
-        LOGGER.warning(
-            "Failed to notify admin about error: %s",
-            notify_exc,
-            exc_info=(type(notify_exc), notify_exc, notify_exc.__traceback__),
-        )
 
 
 @router.errors()
@@ -50,7 +31,8 @@ async def handle_unexpected_error(event: ErrorEvent) -> None:
         exc_info=(type(exception), exception, exception.__traceback__),
     )
 
-    config = _extract_config(event)
+    workflow_data: dict[str, Any] = getattr(event.dispatcher, "workflow_data", {})
+    config = extract_config(workflow_data)
     if not config:
         return
 
@@ -58,4 +40,10 @@ async def handle_unexpected_error(event: ErrorEvent) -> None:
         "Bot encountered an unexpected error.\n"
         f"{type(exception).__name__}: {exception}"
     )
-    await _notify_admin(event, config, message)
+    await notify_admin(
+        event.bot,
+        config,
+        message,
+        logger=LOGGER,
+        context="error",
+    )
