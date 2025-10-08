@@ -11,6 +11,7 @@ from aiogram import Bot
 from .bot import create_bot, create_dispatcher
 from .configuration import load_config
 from .logging_config import configure_logging
+from .metrics import start_metrics_server
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,6 +32,8 @@ async def _notify_admin(bot: Bot, chat_id: int | None, message: str) -> None:
 async def _run_async(config_path: Path | None = None) -> None:
     config = load_config(config_path)
     configure_logging(config.logging)
+    if config.metrics.enabled:
+        start_metrics_server(config.metrics.host, config.metrics.port, logger=LOGGER)
     bot = create_bot(config)
     dispatcher = create_dispatcher()
     dispatcher.workflow_data.update({"config": config})

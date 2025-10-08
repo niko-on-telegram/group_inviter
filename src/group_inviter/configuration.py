@@ -35,11 +35,20 @@ class LoggingConfig(SettingsBase):
     timezone: str = Field("UTC", min_length=1)
 
 
+class MetricsConfig(SettingsBase):
+    """Metrics exposition settings."""
+
+    enabled: bool = Field(True)
+    host: str = Field("127.0.0.1", min_length=1)
+    port: int = Field(8000, ge=1, le=65535)
+
+
 class AppConfig(SettingsBase):
     """Aggregate application configuration."""
 
     telegram: TelegramConfig
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    metrics: MetricsConfig = Field(default_factory=MetricsConfig)
 
 
 DEFAULT_CONFIG_PATH = Path("config/config.yaml")

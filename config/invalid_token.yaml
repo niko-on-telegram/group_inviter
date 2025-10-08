@@ -9,3 +9,7 @@ logging:
   info_filename: "info.log"
   debug_filename: "debug.log"
   timezone: "UTC"
+metrics:
+  enabled: false
+  host: "127.0.0.1"
+  port: 8000

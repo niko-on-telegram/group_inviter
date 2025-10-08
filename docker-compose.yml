@@ -5,11 +5,14 @@ services:
       target: runtime
     environment:
       - GROUP_INVITER_CONFIG=/app/config/config.yaml
+    expose:
+      - "8000"
     volumes:
       - ./config:/app/config:ro
       - ./logs:/app/logs
     depends_on:
       - promtail
+      - prometheus
     restart: unless-stopped
 
   promtail:
@@ -32,6 +35,18 @@ services:
       - loki-data:/loki
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana:11.1.0
     ports:
@@ -46,9 +61,11 @@ services:
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - loki
+      - prometheus
     restart: unless-stopped
 
 volumes:
   grafana-data:
   loki-data:
   promtail-positions:
+  prometheus-data:
