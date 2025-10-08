@@ -1,0 +1,29 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/promtail-positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: group-inviter-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: group-inviter
+          __path__: /var/log/group-inviter/*.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<time>[^|]+) \| (?P<level>[^|]+) \| (?P<logger>[^|]+) \| (?P<message>.*)$'
+      - timestamp:
+          source: time
+          format: 2006-01-02T15:04:05-0700
+      - labels:
+          level:
+          logger:
+      - output:
+          source: message
