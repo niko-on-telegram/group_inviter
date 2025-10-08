@@ -8,12 +8,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN python -m venv "${VENV_PATH}" && "${VENV_PATH}/bin/pip" install --upgrade pip
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y make \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml README.md ./
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+COPY Makefile pyproject.toml README.md ./
 COPY src ./src
 
-RUN "${VENV_PATH}/bin/pip" install .
+RUN make setup VENV="${VENV_PATH}" INSTALL_EXTRAS=
 
 
 FROM python:3.13-slim AS runtime

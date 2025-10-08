@@ -10,6 +10,7 @@ from aiogram.enums import ParseMode
 
 from .configuration import AppConfig
 from .handlers import register
+from .middlewares import UpdateDumpMiddleware
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,5 +36,8 @@ def create_dispatcher() -> Dispatcher:
     """Create dispatcher and register routers."""
 
     dispatcher = Dispatcher()
+    update_dump_middleware = UpdateDumpMiddleware()
+    dispatcher.message.middleware.register(update_dump_middleware)
+    dispatcher.callback_query.middleware.register(update_dump_middleware)
     register(dispatcher)
     return dispatcher

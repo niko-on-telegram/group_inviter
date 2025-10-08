@@ -4,6 +4,7 @@ VENV = .venv
 PYTHON = $(VENV)/bin/python
 RUFF = $(VENV)/bin/ruff
 MYPY = $(VENV)/bin/mypy
+INSTALL_EXTRAS ?= dev
 
 .PHONY: setup install run run-bot lint clean
 
@@ -11,7 +12,11 @@ $(VENV)/bin/python:
 	$(UV) venv --python $(PYTHON_VERSION) $(VENV)
 
 $(VENV)/.installed: pyproject.toml $(VENV)/bin/python
-	$(UV) pip install --python $(PYTHON) --editable .[dev]
+ifeq ($(strip $(INSTALL_EXTRAS)),)
+	$(UV) pip install --python $(PYTHON) --editable .
+else
+	$(UV) pip install --python $(PYTHON) --editable .[${INSTALL_EXTRAS}]
+endif
 	touch $@
 
 setup: $(VENV)/.installed
