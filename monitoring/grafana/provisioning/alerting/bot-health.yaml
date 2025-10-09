@@ -1,0 +1,36 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: bot-health
+    folder: Group Inviter
+    interval: 1m
+    rules:
+      - uid: bot-health-down
+        title: Bot Health Down
+        condition: A
+        for: 1m
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 120
+              to: 0
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: 1 - up{job="group-inviter"}
+              instant: true
+              interval: ""
+              intervalMs: 60000
+              legendFormat: ""
+              maxDataPoints: 43200
+              refId: A
+        noDataState: NoData
+        execErrState: Alerting
+        annotations:
+          summary: "Бот не отвечает на /metrics"
+        labels:
+          severity: critical
