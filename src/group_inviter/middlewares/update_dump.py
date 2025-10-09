@@ -10,6 +10,8 @@ from aiogram.dispatcher.event.bases import UNHANDLED
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from aiogram.types import TelegramObject
 
+from ..metrics import record_unhandled_update
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -26,6 +28,7 @@ class UpdateDumpMiddleware(BaseMiddleware):
         result = await handler(event, data)
         if result is UNHANDLED:
             LOGGER.info("Unhandled")
+            record_unhandled_update()
         return result
 
     @staticmethod

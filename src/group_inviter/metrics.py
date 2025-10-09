@@ -18,6 +18,17 @@ START_HANDLER_CALLS = Counter(
     ("user_id",),
 )
 
+APPROVED_JOIN_REQUESTS = Counter(
+    "group_inviter_join_requests_approved_total",
+    "Number of chat join requests approved by the bot.",
+    ("user_id",),
+)
+
+UNHANDLED_UPDATES = Counter(
+    "group_inviter_updates_unhandled_total",
+    "Number of updates that were not processed by any handler.",
+)
+
 
 def start_metrics_server(host: str, port: int, *, logger: logging.Logger | None = None) -> None:
     """Expose Prometheus metrics if not already running."""
@@ -29,3 +40,15 @@ def start_metrics_server(host: str, port: int, *, logger: logging.Logger | None 
         start_http_server(port, addr=host)
         _SERVER_STARTED = True
     (logger or LOGGER).info("Metrics server listening on %s:%s", host, port)
+
+
+def record_join_request_approval(user_id: str) -> None:
+    """Increment join approval metric for the given user."""
+
+    APPROVED_JOIN_REQUESTS.labels(user_id=str(user_id)).inc()
+
+
+def record_unhandled_update() -> None:
+    """Increment counter for unhandled updates."""
+
+    UNHANDLED_UPDATES.inc()

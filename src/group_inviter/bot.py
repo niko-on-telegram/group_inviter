@@ -36,8 +36,6 @@ def create_dispatcher() -> Dispatcher:
     """Create dispatcher and register routers."""
 
     dispatcher = Dispatcher()
-    update_dump_middleware = UpdateDumpMiddleware()
-    dispatcher.message.middleware.register(update_dump_middleware)
-    dispatcher.callback_query.middleware.register(update_dump_middleware)
+    dispatcher.update.outer_middleware(UpdateDumpMiddleware())
     register(dispatcher)
     return dispatcher
