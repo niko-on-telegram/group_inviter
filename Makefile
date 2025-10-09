@@ -5,26 +5,24 @@ PYTHON = $(VENV)/bin/python
 RUFF = $(VENV)/bin/ruff
 MYPY = $(VENV)/bin/mypy
 INSTALL_EXTRAS ?= dev
-EDITABLE ?= 1
+INSTALL_EDITABLE ?= 1
 
-.PHONY: setup install run run-bot lint clean
+ifeq ($(strip $(INSTALL_EXTRAS)),)
+EXTRAS_SUFFIX :=
+else
+EXTRAS_SUFFIX := [$(INSTALL_EXTRAS)]
+endif
+
+.PHONY: setup install run run-bot lint clean docker-up-alert
 
 $(VENV)/bin/python:
 	$(UV) venv --python $(PYTHON_VERSION) $(VENV)
 
 $(VENV)/.installed: pyproject.toml $(VENV)/bin/python
-ifeq ($(strip $(INSTALL_EXTRAS)),)
-ifeq ($(strip $(EDITABLE)),)
-	$(UV) pip install --python $(PYTHON) .
+ifeq ($(strip $(INSTALL_EDITABLE)),1)
+	$(UV) pip install --python $(PYTHON) --editable .$(EXTRAS_SUFFIX)
 else
-	$(UV) pip install --python $(PYTHON) --editable .
-endif
-else
-ifeq ($(strip $(EDITABLE)),)
-	$(UV) pip install --python $(PYTHON) .[${INSTALL_EXTRAS}]
-else
-	$(UV) pip install --python $(PYTHON) --editable .[${INSTALL_EXTRAS}]
-endif
+	$(UV) pip install --python $(PYTHON) .$(EXTRAS_SUFFIX)
 endif
 	touch $@
 
@@ -43,3 +41,7 @@ lint: setup
 
 clean:
 	rm -rf $(VENV)
+
+docker-up-alert:
+	docker compose up -d
+	./scripts/configure_grafana_contact_point.sh
