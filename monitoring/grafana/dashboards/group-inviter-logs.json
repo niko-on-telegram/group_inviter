@@ -246,7 +246,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(group_inviter_start_handler_calls_total{user_id=~\"$user_id\"}[1m])",
+          "expr": "sum by (user_id) (increase(group_inviter_start_handler_calls_total{user_id=~\"$user_id\"}[$__interval])) / ($__interval_ms/1000)",
           "legendFormat": "{{user_id}}",
           "range": true,
           "refId": "A"
@@ -463,6 +463,125 @@
         "message": "Появились необработанные обновления",
         "name": "Unhandled Updates > 0",
         "noDataState": "no_data",
+        "notifications": [
+          {
+            "uid": "telegram-alerts"
+          }
+        ]
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "id": 0,
+              "op": "=",
+              "text": "Down",
+              "value": "0"
+            },
+            {
+              "id": 1,
+              "op": "=",
+              "text": "Up",
+              "value": "1"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 38
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "11.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "up{job=\"group-inviter\"}",
+          "instant": true,
+          "legendFormat": "{{instance}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Bot Health",
+      "transformations": [],
+      "type": "stat",
+      "alert": {
+        "alertRuleTags": {},
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0.5
+              ],
+              "type": "lt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "A",
+                "2m",
+                "now"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "last"
+            },
+            "type": "query"
+          }
+        ],
+        "datasourceUid": "prometheus",
+        "executionErrorState": "alerting",
+        "frequency": "1m",
+        "handler": 1,
+        "message": "Бот не отвечает на /metrics",
+        "name": "Bot Health Down",
+        "noDataState": "alerting",
         "notifications": [
           {
             "uid": "telegram-alerts"

@@ -38,6 +38,12 @@ start-bot = "group_inviter.__main__:entrypoint"
 [tool.hatch.metadata]
 allow-direct-references = true
 
+[tool.hatch.build.targets.sdist]
+include = ["src/**", "pyproject.toml", "README.md"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/group_inviter"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py313"

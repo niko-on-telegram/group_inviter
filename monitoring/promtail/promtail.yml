@@ -15,7 +15,7 @@ scrape_configs:
           - localhost
         labels:
           job: group-inviter
-          __path__: /var/log/group-inviter/*.log
+          __path__: /var/log/group-inviter/debug-*.log
     pipeline_stages:
       - regex:
           expression: '^(?P<time>[^|]+) \| (?P<level>[^|]+) \| (?P<logger>[^|]+) \| (?P<message>.*)$'

@@ -17,6 +17,6 @@ async def handle_start(message: Message) -> None:
     user_id = message.from_user.id if message.from_user and message.from_user.id else "unknown"
     START_HANDLER_CALLS.labels(user_id=str(user_id)).inc()
     await message.answer(
-        "Hello! I'm ready to help you manage group invitations. "
-        "Configure me and extend handlers in src/group_inviter/handlers."
+        "👋 Привет! Я готов помочь тебе управлять приглашениями в группы. \n\n"
+        "👨‍💻 by @mr_baloo"
     )

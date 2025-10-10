@@ -17,7 +17,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 COPY Makefile pyproject.toml README.md ./
 COPY src ./src
 
-RUN make setup VENV="${VENV_PATH}" INSTALL_EXTRAS= EDITABLE=
+RUN make setup VENV="${VENV_PATH}" INSTALL_EXTRAS= INSTALL_EDITABLE=0
 
 
 FROM python:3.13-slim AS runtime
