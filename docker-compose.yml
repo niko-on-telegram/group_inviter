@@ -10,6 +10,8 @@ services:
     volumes:
       - ./config:/app/config:ro
       - ./logs:/app/logs
+    labels:
+      - promtail.scrape=true
     depends_on:
       - promtail
       - prometheus
@@ -20,7 +22,8 @@ services:
     command: -config.file=/etc/promtail/promtail.yml
     volumes:
       - ./monitoring/promtail/promtail.yml:/etc/promtail/promtail.yml:ro
-      - ./logs:/var/log/group-inviter:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
       - promtail-positions:/tmp
     depends_on:
       - loki
@@ -48,7 +51,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:11.1.0
+    image: grafana/grafana:11.6
     ports:
       - "3000:3000"
     environment:
@@ -63,8 +66,8 @@ services:
         CONFIG_FILE=/etc/group-inviter/config.yaml
         TOKEN=$$(awk -F'"' '/bot_token:/ {print $$2; exit}' "$${CONFIG_FILE}")
         CHAT=$$(awk -F': ' '/admin_chat_id:/ {print $$2; exit}' "$${CONFIG_FILE}")
-        TEMPLATE=/etc/grafana/provisioning/contact-points/telegram.yaml.tmpl
-        OUTPUT=/etc/grafana/provisioning/contact-points/telegram.yaml
+        TEMPLATE=/etc/grafana/provisioning/alerting/contact-points.yaml.tmpl
+        OUTPUT=/etc/grafana/provisioning/alerting/contact-points.yaml
         sed "s/__BOT_TOKEN__/$$TOKEN/g; s/__CHAT_ID__/$$CHAT/g" "$${TEMPLATE}" > "$${OUTPUT}"
         exec /run.sh
     volumes:

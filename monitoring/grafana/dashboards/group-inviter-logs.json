@@ -677,20 +677,14 @@
       {
         "current": {
           "selected": false,
-          "text": ".*",
-          "value": ".*"
+          "text": "",
+          "value": ""
         },
         "hide": 0,
         "label": "Message filter (regex)",
         "name": "log_filter",
-        "options": [
-          {
-            "selected": true,
-            "text": ".*",
-            "value": ".*"
-          }
-        ],
-        "query": ".*",
+        "options": [],
+        "query": "",
         "skipUrlSync": false,
         "type": "textbox"
       }

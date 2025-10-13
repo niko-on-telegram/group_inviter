@@ -4,3 +4,4 @@
 .pytest_cache/
 __pycache__/
 logs/
+monitoring/grafana/provisioning/alerting/contact-points.yaml
