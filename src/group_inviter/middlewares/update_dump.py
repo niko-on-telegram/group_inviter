@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Awaitable, Callable, Dict
+from typing import Any, Awaitable, Callable
 
 from aiogram.dispatcher.event.bases import UNHANDLED
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
@@ -20,9 +20,9 @@ class UpdateDumpMiddleware(BaseMiddleware):
 
     async def __call__(
         self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
-        data: Dict[str, Any],
+        data: dict[str, Any],
     ) -> Any:
         LOGGER.info("Incoming %s: %s", event.__class__.__name__, self._serialize(event))
         result = await handler(event, data)
@@ -35,6 +35,7 @@ class UpdateDumpMiddleware(BaseMiddleware):
     def _serialize(event: TelegramObject) -> str:
         """Serialize incoming event to JSON string."""
 
+        payload: Any
         if hasattr(event, "model_dump"):
             payload = event.model_dump(mode="json", exclude_none=True)
         else:  # pragma: no cover - fallback for unexpected types

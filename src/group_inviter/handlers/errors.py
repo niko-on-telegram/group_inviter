@@ -9,7 +9,6 @@ from typing import Any
 from aiogram import Router
 from aiogram.types import ErrorEvent
 
-from ..configuration import AppConfig
 from ._helpers import extract_config, notify_admin
 
 LOGGER = logging.getLogger(__name__)
@@ -31,7 +30,8 @@ async def handle_unexpected_error(event: ErrorEvent) -> None:
         exc_info=(type(exception), exception, exception.__traceback__),
     )
 
-    workflow_data: dict[str, Any] = getattr(event.dispatcher, "workflow_data", {})
+    dispatcher = getattr(event, "dispatcher", None)
+    workflow_data: dict[str, Any] = getattr(dispatcher, "workflow_data", {}) if dispatcher else {}
     config = extract_config(workflow_data)
     if not config:
         return
@@ -40,8 +40,11 @@ async def handle_unexpected_error(event: ErrorEvent) -> None:
         "Bot encountered an unexpected error.\n"
         f"{type(exception).__name__}: {exception}"
     )
+    bot = getattr(event, "bot", None)
+    if bot is None:
+        return
     await notify_admin(
-        event.bot,
+        bot,
         config,
         message,
         logger=LOGGER,

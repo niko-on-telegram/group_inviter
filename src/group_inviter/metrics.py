@@ -42,7 +42,7 @@ def start_metrics_server(host: str, port: int, *, logger: logging.Logger | None 
     (logger or LOGGER).info("Metrics server listening on %s:%s", host, port)
 
 
-def record_join_request_approval(user_id: str) -> None:
+def record_join_request_approval(user_id: int) -> None:
     """Increment join approval metric for the given user."""
 
     APPROVED_JOIN_REQUESTS.labels(user_id=str(user_id)).inc()

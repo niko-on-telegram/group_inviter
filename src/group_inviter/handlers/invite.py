@@ -13,6 +13,7 @@ from aiogram.types import ChatInviteLink, ChatJoinRequest, Message
 from aiogram.utils.text_decorations import html_decoration as html
 
 from ..configuration import AppConfig
+from ..database import UsersRepository
 from ..metrics import record_join_request_approval
 from ._helpers import notify_admin
 
@@ -91,6 +92,7 @@ async def handle_join_request(
     join_request: ChatJoinRequest,
     bot: Bot,
     config: AppConfig,
+    user_repository: UsersRepository,
 ) -> None:
     """Automatically approve join requests for links created by the bot."""
 
@@ -118,6 +120,15 @@ async def handle_join_request(
                 exc,
             )
             return
+
+        try:
+            await user_repository.record_join_request(join_request)
+        except Exception as exc:  # pragma: no cover - database errors
+            LOGGER.warning(
+                "Failed to persist join request for %s: %s",
+                join_request.from_user.id,
+                exc,
+            )
 
         record_join_request_approval(join_request.from_user.id)
 

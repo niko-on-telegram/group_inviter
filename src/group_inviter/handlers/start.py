@@ -5,6 +5,7 @@ from __future__ import annotations
 from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
+
 from ..metrics import START_HANDLER_CALLS
 
 router = Router()

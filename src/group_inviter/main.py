@@ -10,6 +10,7 @@ from aiogram import Bot
 
 from .bot import create_bot, create_dispatcher
 from .configuration import load_config
+from .database import UsersRepository, create_pool, ensure_schema
 from .logging_config import configure_logging
 from .metrics import start_metrics_server
 
@@ -37,20 +38,26 @@ async def _run_async(config_path: Path | None = None) -> None:
     bot = create_bot(config)
     dispatcher = create_dispatcher()
     dispatcher.workflow_data.update({"config": config})
-    LOGGER.info("Starting polling")
+    pool = await create_pool(config.database)
     try:
-        await dispatcher.start_polling(bot)
-    except Exception as exc:
-        LOGGER.error(
-            "Polling stopped due to an exception",
-            exc_info=(type(exc), exc, exc.__traceback__),
-        )
-        await _notify_admin(
-            bot,
-            config.telegram.admin_chat_id,
-            f"Bot polling stopped due to an error:\n{type(exc).__name__}: {exc}",
-        )
-        raise
+        await ensure_schema(pool)
+        dispatcher.workflow_data.update({"user_repository": UsersRepository(pool)})
+        LOGGER.info("Starting polling")
+        try:
+            await dispatcher.start_polling(bot)
+        except Exception as exc:
+            LOGGER.error(
+                "Polling stopped due to an exception",
+                exc_info=(type(exc), exc, exc.__traceback__),
+            )
+            await _notify_admin(
+                bot,
+                config.telegram.admin_chat_id,
+                f"Bot polling stopped due to an error:\n{type(exc).__name__}: {exc}",
+            )
+            raise
+    finally:
+        await pool.close()
 
 
 def main(config_path: str | None = None) -> None:

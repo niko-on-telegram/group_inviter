@@ -13,8 +13,28 @@ services:
     labels:
       - promtail.scrape=true
     depends_on:
+      - postgres
       - promtail
       - prometheus
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=group_inviter
+      - POSTGRES_USER=group_inviter
+      - POSTGRES_PASSWORD=group_inviter
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -d group_inviter -U group_inviter
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   promtail:
@@ -85,3 +105,4 @@ volumes:
   loki-data:
   promtail-positions:
   prometheus-data:
+  postgres-data:

@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 
 class SettingsBase(BaseModel):
@@ -43,12 +43,32 @@ class MetricsConfig(SettingsBase):
     port: int = Field(8000, ge=1, le=65535)
 
 
+class DatabaseConfig(SettingsBase):
+    """Database connection settings."""
+
+    host: str = Field("127.0.0.1", min_length=1)
+    port: int = Field(5432, ge=1, le=65535)
+    database: str = Field(..., min_length=1)
+    user: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=1)
+    min_pool_size: int = Field(1, ge=1)
+    max_pool_size: int = Field(10, ge=1)
+
+    @model_validator(mode="after")
+    def validate_pool_limits(self) -> DatabaseConfig:
+        if self.max_pool_size < self.min_pool_size:
+            msg = "max_pool_size must be greater than or equal to min_pool_size"
+            raise ValueError(msg)
+        return self
+
+
 class AppConfig(SettingsBase):
     """Aggregate application configuration."""
 
     telegram: TelegramConfig
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     metrics: MetricsConfig = Field(default_factory=MetricsConfig)
+    database: DatabaseConfig
 
 
 DEFAULT_CONFIG_PATH = Path("config/config.yaml")
