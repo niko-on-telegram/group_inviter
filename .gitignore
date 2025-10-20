@@ -5,3 +5,4 @@
 __pycache__/
 logs/
 monitoring/grafana/provisioning/alerting/contact-points.yaml
+.coverage

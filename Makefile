@@ -39,6 +39,12 @@ lint: setup
 	$(RUFF) check src tests
 	$(MYPY) src
 
+test: setup
+	$(PYTHON) -m pytest
+
+test-cov: setup
+	$(PYTHON) -m pytest --cov=src/group_inviter --cov-report=term-missing --cov-report=html
+
 clean:
 	rm -rf $(VENV)
 
