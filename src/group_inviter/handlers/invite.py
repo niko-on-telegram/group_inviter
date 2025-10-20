@@ -16,6 +16,7 @@ from ..configuration import AppConfig
 from ..database import UsersRepository
 from ..metrics import record_join_request_approval
 from ._helpers import notify_admin
+from .texts import AQUA_STUDIO_PHOTO, AQUA_STUDIO_PROMO
 
 LOGGER = logging.getLogger(__name__)
 router = Router()
@@ -39,41 +40,20 @@ def _is_bot_generated_invite(invite: ChatInviteLink | None) -> bool:
     return bool(invite and invite.creator and invite.creator.is_bot)
 
 
-def _welcome_message(join_request: ChatJoinRequest) -> str:
-    user = join_request.from_user
-    lines = [
-        f"Привет, {html.quote(user.full_name)}!",
-        "Твоя заявка одобрена. Добро пожаловать в чат!",
-    ]
-    if user.username:
-        lines.append(f"Твой ник: @{html.quote(user.username)}")
-    return "\n".join(lines)
-
-
 async def _notify_user_of_approval(bot: Bot, join_request: ChatJoinRequest) -> None:
     """Best-effort delivery of the welcome message to the user."""
 
-    message_text = _welcome_message(join_request)
-    user_id = join_request.from_user.id
-    targets: list[int] = []
-
-    user_chat_id = getattr(join_request, "user_chat_id", None)
-    if user_chat_id:
-        targets.append(user_chat_id)
-    if not targets or targets[-1] != user_id:
-        targets.append(user_id)
-
-    for target in targets:
-        try:
-            await bot.send_message(target, message_text, parse_mode="HTML")
-            return
-        except Exception as exc:  # pragma: no cover - depends on user privacy settings
-            LOGGER.debug(
-                "Failed to deliver welcome message via chat %s for user %s: %s",
-                target,
-                user_id,
-                exc,
-            )
+    try:
+        await bot.send_photo(join_request.user_chat_id, photo=AQUA_STUDIO_PHOTO,
+                             caption=AQUA_STUDIO_PROMO, parse_mode="HTML")
+        return
+    except Exception as exc:  # pragma: no cover - depends on user privacy settings
+        LOGGER.debug(
+            "Failed to deliver welcome message via chat %s for user %s: %s",
+            join_request.user_chat_id,
+            join_request.from_user,
+            exc,
+        )
 
 
 @router.message(Command("generate_invite"))
