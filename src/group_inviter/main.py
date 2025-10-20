@@ -35,29 +35,35 @@ async def _run_async(config_path: Path | None = None) -> None:
     configure_logging(config.logging)
     if config.metrics.enabled:
         start_metrics_server(config.metrics.host, config.metrics.port, logger=LOGGER)
+
     bot = create_bot(config)
     dispatcher = create_dispatcher()
     dispatcher.workflow_data.update({"config": config})
-    pool = await create_pool(config.database)
+
+    pool = None
     try:
+        pool = await create_pool(config.database)
         await ensure_schema(pool)
         dispatcher.workflow_data.update({"user_repository": UsersRepository(pool)})
         LOGGER.info("Starting polling")
-        try:
-            await dispatcher.start_polling(bot)
-        except Exception as exc:
-            LOGGER.error(
-                "Polling stopped due to an exception",
-                exc_info=(type(exc), exc, exc.__traceback__),
-            )
-            await _notify_admin(
-                bot,
-                config.telegram.admin_chat_id,
-                f"Bot polling stopped due to an error:\n{type(exc).__name__}: {exc}",
-            )
-            raise
+        await dispatcher.start_polling(bot)
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        LOGGER.error(
+            "Bot runtime stopped due to an exception",
+            exc_info=(type(exc), exc, exc.__traceback__),
+        )
+        await _notify_admin(
+            bot,
+            config.telegram.admin_chat_id,
+            f"Bot runtime stopped due to an error:\n{type(exc).__name__}: {exc}",
+        )
+        raise
     finally:
-        await pool.close()
+        if pool is not None:
+            await pool.close()
+        await bot.session.close()
 
 
 def main(config_path: str | None = None) -> None:

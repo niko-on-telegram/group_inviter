@@ -35,6 +35,10 @@ def _format_invite_message(invite: ChatInviteLink) -> str:
     )
 
 
+def _is_bot_generated_invite(invite: ChatInviteLink | None) -> bool:
+    return bool(invite and invite.creator and invite.creator.is_bot)
+
+
 def _welcome_message(join_request: ChatJoinRequest) -> str:
     user = join_request.from_user
     lines = [
@@ -44,6 +48,32 @@ def _welcome_message(join_request: ChatJoinRequest) -> str:
     if user.username:
         lines.append(f"Твой ник: @{html.quote(user.username)}")
     return "\n".join(lines)
+
+
+async def _notify_user_of_approval(bot: Bot, join_request: ChatJoinRequest) -> None:
+    """Best-effort delivery of the welcome message to the user."""
+
+    message_text = _welcome_message(join_request)
+    user_id = join_request.from_user.id
+    targets: list[int] = []
+
+    user_chat_id = getattr(join_request, "user_chat_id", None)
+    if user_chat_id:
+        targets.append(user_chat_id)
+    if not targets or targets[-1] != user_id:
+        targets.append(user_id)
+
+    for target in targets:
+        try:
+            await bot.send_message(target, message_text, parse_mode="HTML")
+            return
+        except Exception as exc:  # pragma: no cover - depends on user privacy settings
+            LOGGER.debug(
+                "Failed to deliver welcome message via chat %s for user %s: %s",
+                target,
+                user_id,
+                exc,
+            )
 
 
 @router.message(Command("generate_invite"))
@@ -97,56 +127,53 @@ async def handle_join_request(
     """Automatically approve join requests for links created by the bot."""
 
     invite = join_request.invite_link
-    if invite and invite.creator and invite.creator.is_bot:
-        try:
-            await bot.send_message(
-                join_request.from_user.id,
-                _welcome_message(join_request),
-                parse_mode="HTML",
-            )
-        except Exception as exc:  # pragma: no cover - user privacy settings
-            LOGGER.debug(
-                "Failed to send welcome message to %s: %s",
-                join_request.from_user.id,
-                exc,
-            )
-
-        try:
-            await bot.approve_chat_join_request(join_request.chat.id, join_request.from_user.id)
-        except Exception as exc:  # pragma: no cover - network errors
-            LOGGER.warning(
-                "Failed to approve join request from %s: %s",
-                join_request.from_user.id,
-                exc,
-            )
-            return
-
-        try:
-            await user_repository.record_join_request(join_request)
-        except Exception as exc:  # pragma: no cover - database errors
-            LOGGER.warning(
-                "Failed to persist join request for %s: %s",
-                join_request.from_user.id,
-                exc,
-            )
-
-        record_join_request_approval(join_request.from_user.id)
-
-        LOGGER.info(
-            "Approved join request from %s (%s) for chat %s",
+    if not _is_bot_generated_invite(invite):
+        LOGGER.debug(
+            "Ignoring join request from %s (%s) for chat %s via external link",
             join_request.from_user.id,
             join_request.from_user.full_name,
             join_request.chat.id,
         )
+        return
 
-        if config:
-            await notify_admin(
-                bot,
-                config,
-                (
-                    "Новый участник одобрен.\n"
-                    f"Пользователь: {join_request.from_user.full_name} (@{join_request.from_user.username or 'нет'})"
-                ),
-                logger=LOGGER,
-                context="join-request",
-            )
+    await _notify_user_of_approval(bot, join_request)
+
+    try:
+        await bot.approve_chat_join_request(join_request.chat.id, join_request.from_user.id)
+    except Exception as exc:  # pragma: no cover - network errors
+        LOGGER.warning(
+            "Failed to approve join request from %s: %s",
+            join_request.from_user.id,
+            exc,
+        )
+        return
+
+    try:
+        await user_repository.record_join_request(join_request)
+    except Exception as exc:  # pragma: no cover - database errors
+        LOGGER.warning(
+            "Failed to persist join request for %s: %s",
+            join_request.from_user.id,
+            exc,
+        )
+
+    record_join_request_approval(join_request.from_user.id)
+
+    LOGGER.info(
+        "Approved join request from %s (%s) for chat %s",
+        join_request.from_user.id,
+        join_request.from_user.full_name,
+        join_request.chat.id,
+    )
+
+    if config:
+        await notify_admin(
+            bot,
+            config,
+            (
+                "Новый участник одобрен.\n"
+                f"Пользователь: {join_request.from_user.full_name} (@{join_request.from_user.username or 'нет'})"
+            ),
+            logger=LOGGER,
+            context="join-request",
+        )
