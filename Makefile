@@ -13,7 +13,7 @@ else
 EXTRAS_SUFFIX := [$(INSTALL_EXTRAS)]
 endif
 
-.PHONY: setup install run run-bot lint clean docker-up-alert prepare-dirs
+.PHONY: setup install run run-bot lint clean up down prepare-dirs
 
 prepare-dirs:
 	./setup.sh
@@ -51,5 +51,8 @@ test-cov: setup
 clean:
 	rm -rf $(VENV)
 
-docker-up-alert: prepare-dirs
-	docker compose up -d
+up: prepare-dirs
+	docker compose up -d --build
+
+down:
+	docker compose down

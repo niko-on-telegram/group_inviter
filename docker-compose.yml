@@ -78,21 +78,9 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_AUTH_ANONYMOUS_ENABLED=false
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        set -e
-        CONFIG_FILE=/etc/group-inviter/config.yaml
-        TOKEN=$$(awk -F'"' '/bot_token:/ {print $$2; exit}' "$${CONFIG_FILE}")
-        CHAT=$$(awk -F': ' '/admin_chat_id:/ {print $$2; exit}' "$${CONFIG_FILE}")
-        TEMPLATE=/etc/grafana/provisioning/alerting/contact-points.yaml.tmpl
-        OUTPUT=/etc/grafana/provisioning/alerting/contact-points.yaml
-        sed "s/__BOT_TOKEN__/$$TOKEN/g; s/__CHAT_ID__/$$CHAT/g" "$${TEMPLATE}" > "$${OUTPUT}"
-        exec /run.sh
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:Z
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - ./config/config.yaml:/etc/group-inviter/config.yaml:ro
     depends_on:
