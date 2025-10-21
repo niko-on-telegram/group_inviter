@@ -74,7 +74,7 @@ async def handle_generate_invite(
         return
 
     if not command.args:
-        await message.answer("Укажите ID чата: /generate_invite <chat_id>.")
+        await message.answer(f"Укажите ID чата: /generate_invite {html.quote('<chat_id>')}.")
         return
 
     try:
