@@ -92,7 +92,7 @@ services:
         exec /run.sh
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:Z
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - ./config/config.yaml:/etc/group-inviter/config.yaml:ro
     depends_on:

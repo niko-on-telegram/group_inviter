@@ -13,7 +13,10 @@ else
 EXTRAS_SUFFIX := [$(INSTALL_EXTRAS)]
 endif
 
-.PHONY: setup install run run-bot lint clean docker-up-alert
+.PHONY: setup install run run-bot lint clean docker-up-alert prepare-dirs
+
+prepare-dirs:
+	./setup.sh
 
 $(VENV)/bin/python:
 	$(UV) venv --python $(PYTHON_VERSION) $(VENV)
@@ -48,6 +51,5 @@ test-cov: setup
 clean:
 	rm -rf $(VENV)
 
-docker-up-alert:
+docker-up-alert: prepare-dirs
 	docker compose up -d
-	./scripts/configure_grafana_contact_point.sh
